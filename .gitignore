@@ -213,3 +213,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Code to compile and the emission
+/data/*
+!/data/return_2.c
