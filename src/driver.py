@@ -25,15 +25,12 @@ parser.add_argument(
     const=1,
     help="Run lexing, parsing, and assembly generation, but stop before code emission",
 )
-
 args = parser.parse_args()
 
-TOKEN_PATTERNS = {
-    # "identifier": re.compile(r"[a-zA-Z_]\w*\b"),
-    "constant": re.compile(r"[0-9]+\b"),
-    "keyword": re.compile(r"[int\bvoid\breturn\b]"),
-    "symbol": re.compile(r"[\(\){};]"),
-}
+PATTERN = re.compile(
+    r"(?P<IDENTIFIER>[a-zA-Z_]\w*\b)|(?P<CONSTANT>[0-9]+\b)|(?P<SYMBOL>[\(\){};])?"
+)
+KEYWORDS = ["int", "void", "return"]
 
 
 def preprocess(filename) -> str:
@@ -55,22 +52,19 @@ def lexer(filename):
         source: str = f.read().rstrip()
 
     tokens = []
+
     while source:
         token = ""
         if source[0].isspace():
             source = source.lstrip()
-        # TODO: replace for loop and token patterns with a single regex and reduce iterations
-        for key, pattern in TOKEN_PATTERNS.items():
-            match = pattern.match(source)
-            if match and key == "identifier":
-                print(key)
-                token = (key, match.group())
-                break
-            if match:
-                token = (key, match.group())
-                break
+        match = PATTERN.match(source)
+        if match:
+            token = match.group()
+            if token in KEYWORDS:
+                token = ("KEYWORD", token)
+            else:
+                token = (match.lastgroup, token)
         if not token:
-            print(source)
             raise KeyError(
                 [
                     "Unsupported character provided, unable to tokenise source.",
