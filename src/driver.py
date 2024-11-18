@@ -38,21 +38,14 @@ KEYWORDS = ["int", "void", "return"]
 def preprocess(filename) -> str:
     """Prepare a file to be compiled by performing a preprocessing pass over the source file"""
     source_file = Path(filename)
-    # TODO: this can be removed and the output of gcc can be piped directly into a string instead of wastefully creating a new file
-    processed_file = source_file.with_suffix(".i")
-
-    with processed_file.open(mode="w+", encoding="utf-8") as f:
-        try:
-            subprocess.run(
-                ["gcc", "-E", "-P", source_file], check=True, text=True, stdout=f
-            )
-        except subprocess.CalledProcessError as e:
-            processed_file.unlink()
-            # TODO: standardise error return logic
-            raise e
-        f.seek(0)
-        source_content = f.read().rstrip()
-    processed_file.unlink()
+    with source_file.open(mode="r", encoding="utf-8"):
+        processed = subprocess.run(
+            ["gcc", "-E", "-P", source_file],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        )
+        source_content = processed.stdout.rstrip()
 
     return source_content
 
@@ -102,6 +95,5 @@ def main():
         return 0
     if args.codegen:
         return 0
-    else:
-        preprocess(args.filename)
-        return 0
+    preprocess(args.filename)
+    return 0
