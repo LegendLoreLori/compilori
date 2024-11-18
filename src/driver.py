@@ -27,7 +27,6 @@ parser.add_argument(
     const=1,
     help="Run lexing, parsing, and assembly generation, but stop before code emission",
 )
-args = parser.parse_args()
 
 PATTERN = re.compile(
     r"(?P<IDENTIFIER>[a-zA-Z_]\w*\b)|(?P<CONSTANT>[0-9]+\b)|(?P<SYMBOL>[\(\){};])"
@@ -55,9 +54,8 @@ def compile_c():
     NotImplemented
 
 
-def lexer(source: str):
+def lex(source: str):
     """Tokenise contents of a preprocessed file"""
-
     tokens = []
     while source:
         token = ""
@@ -71,8 +69,7 @@ def lexer(source: str):
             else:
                 token = (match.lastgroup, token)
         if not token:
-            # TODO: standardise error return logic
-            raise KeyError(
+            raise ValueError(
                 [
                     "Unsupported character provided, unable to tokenise source.",
                     repr(source),
@@ -80,6 +77,12 @@ def lexer(source: str):
             )
         tokens.append(token)
         source = source.removeprefix(token[-1])
+    if not tokens:
+        raise ValueError(
+            ["Unsupported data provided, unable to tokenise source."],
+            repr(source),
+            repr(tokens),
+        )
     return tokens
 
 
@@ -88,8 +91,10 @@ def link():
 
 
 def main():
+    args = parser.parse_args()
+
     if args.lex:
-        lexer(preprocess(args.filename))
+        lex(preprocess(args.filename))
         return 0
     if args.parse:
         return 0
